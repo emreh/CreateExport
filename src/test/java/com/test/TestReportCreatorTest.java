@@ -18,7 +18,8 @@ public class TestReportCreatorTest {
 
     @Test
     public void test() throws IOException {
-        CreateSimpleReport createSimpleReport = new CreateSimpleReport().setDetails(modelDetailLists).setModel(init()).builder();
+        CreateSimpleReport createSimpleReport = new CreateSimpleReport().setDetails(modelDetailLists).setModel(init()).setMerge(modelMerge).builder();
+        System.out.println(createSimpleReport.getModelMergeIndex());
         { // Excel
             File currDir = new File(".");
             String path = currDir.getAbsolutePath();
@@ -61,14 +62,22 @@ public class TestReportCreatorTest {
         private static final long serialVersionUID = 2278804983970104997L;
 
         {
-        add(new ModelDetails("Parent Name", "nameParent", true));
-        add(new ModelDetails("Parent last Name", "lastNameParent", true));
-        add(new ModelDetails("child Model", "childModelList", false));
-        add(new ModelDetails("Child Name", "childModelList.childName", true));
-        add(new ModelDetails("child Last Name", "childModelList.childLastName", true));
-        add(new ModelDetails("childModel_ Sub Child Model", "childModelList.subChildModelList", true));
-        add(new ModelDetails("childModel_ Sub Child Model _ sub Child Name", "childModelList.subChildModelList.subChildName", true));
-        add(new ModelDetails("childModel_ Sub Child Model _ sub Child Last Name", "childModelList.subChildModelList.subChildLastName", true));
+            add(new ModelDetails("Parent Name", "nameParent", true));
+            add(new ModelDetails("Parent last Name", "lastNameParent", true));
+            add(new ModelDetails("child Model", "childModelList", false));
+            add(new ModelDetails("Child Name", "childModelList.childName", true));
+            add(new ModelDetails("child Last Name", "childModelList.childLastName", true));
+            add(new ModelDetails("childModel_ Sub Child Model", "childModelList.subChildModelList", true));
+            add(new ModelDetails("childModel_ Sub Child Model _ sub Child Name", "childModelList.subChildModelList.subChildName", true));
+            add(new ModelDetails("childModel_ Sub Child Model _ sub Child Last Name", "childModelList.subChildModelList.subChildLastName", true));
+        }
+    };
+
+    //Input Merge Model To Excel
+    static final List<String> modelMerge = new ArrayList<String>() {{
+        add("nameParent");
+        add("childModelList.childName");
+        add("childModelList.subChildModelList.subChildName");
     }};
 
     private static List<ParentModel> init() {

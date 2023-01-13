@@ -20,6 +20,8 @@ public class CreateSimpleReport<T> {
 
     private List<T> dataList;
     private List<ModelDetails> modelDetailsList = new ArrayList<>();
+    private List<String> modelMergeList = new ArrayList<>();
+    private Map<String, Integer> modelMergeIndex = new LinkedHashMap<>();
 
     @Getter(AccessLevel.NONE)
     private final List<String> header = new ArrayList<>();
@@ -31,6 +33,11 @@ public class CreateSimpleReport<T> {
 
     public CreateSimpleReport<T> setModel(List<T> modelList) {
         this.dataList = modelList;
+        return this;
+    }
+
+    public CreateSimpleReport<T> setMerge(List<String> modelMergeList) {
+        this.modelMergeList = modelMergeList;
         return this;
     }
 
@@ -56,9 +63,16 @@ public class CreateSimpleReport<T> {
 
         CreatorSimpleExcel creatorSimpleExcel = new CreatorSimpleExcel();
 
-        return creatorSimpleExcel.createExportFromList(this.columnsExport, exportType, name != null ? name : "Created By Report Recipient");
+        return creatorSimpleExcel.createExportFromList(this.columnsExport, exportType, name != null ? name : "Created By Report Recipient", this.modelMergeIndex);
     }
 
+    /**
+     * Create Column
+     *
+     * @param allFields
+     * @param data
+     * @param model
+     */
     private void createColumn(Field[] allFields, List<T> data, List<ModelDetails> model) {
         data.forEach(d -> {
             Class<?> clazz = d.getClass();
@@ -114,6 +128,16 @@ public class CreateSimpleReport<T> {
         });
     }
 
+    /**
+     * Create Nested Column & Create Empty Column
+     *
+     * @param parentName
+     * @param subAllFields
+     * @param columnCounter
+     * @param subList
+     * @param model
+     * @return
+     */
     private List<List<String>> createNestedColumn(String parentName, Field[] subAllFields, AtomicInteger columnCounter, Set<Object> subList, List<ModelDetails> model) {
         List<List<String>> localColumns = new ArrayList<>();
         subList.forEach(sub -> {
@@ -179,6 +203,12 @@ public class CreateSimpleReport<T> {
         return localColumns;
     }
 
+    /**
+     * Create Header
+     *
+     * @param allFields
+     * @param model
+     */
     private void createHeader(Field[] allFields, List<ModelDetails> model) {
         AtomicInteger headerCounter = new AtomicInteger(0);
 
@@ -188,6 +218,7 @@ public class CreateSimpleReport<T> {
                 if (!model.get(i).getFieldName().contains(".") &&
                         field.getName().equals(model.get(i).getFieldName()) && i == headerCounter.get()) {
                     header.add(model.get(i).getTitle());
+                    indexOfMerge(modelDetailsList.get(i).getFieldName(), headerCounter);
                     headerCounter.getAndIncrement();
                 }
                 // Child Of Collection
@@ -204,11 +235,34 @@ public class CreateSimpleReport<T> {
         }
     }
 
+    /**
+     * Child Of createHeader Function, Create Nested Header
+     *
+     * @param className
+     * @param modelDetailsList
+     * @param headerCounter
+     */
     private void createNestedHeader(String className, List<ModelDetails> modelDetailsList, AtomicInteger headerCounter) {
         for (int i = 0; i < modelDetailsList.size(); i++)
             if (modelDetailsList.get(i).getFieldName().startsWith(getClassNameFromPackage(className))
-                    && i == headerCounter.get())
+                    && i == headerCounter.get()) {
                 header.add(modelDetailsList.get(i).getTitle());
+                indexOfMerge(modelDetailsList.get(i).getFieldName(), headerCounter);
+            }
+    }
+
+    /**
+     * For Find Index Of Header
+     *
+     * @param filedName
+     * @param headerCounter
+     */
+    private void indexOfMerge(String filedName, AtomicInteger headerCounter) {
+        modelMergeList.forEach(merge -> {
+            if (merge.equals(filedName)) {
+                modelMergeIndex.put(filedName, headerCounter.get());
+            }
+        });
     }
 
     private String getClassNameFromPackage(String className) {
