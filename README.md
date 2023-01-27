@@ -9,7 +9,7 @@ Features include the following:\
 `1- Arrangement in columns`\
 `2- Placing the determined variables in the details model`\
 `3- Calling data from sub-models`\
-`4- Merging the specified columns with empty values in the Excel output`
+`4- Merging the specified columns with empty values in the Excel output`\
 `5- Add Filter To All Columns In Excel Export`
 
 #Persian
