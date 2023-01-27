@@ -1,7 +1,7 @@
 package com.emreh.creator;
 
 import com.emreh.enums.ExportType;
-import com.emreh.model.ColumnModelDetails;
+import com.emreh.model.ColumnModel;
 import com.emreh.model.ImmutableTriple;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
@@ -22,13 +22,13 @@ class CreatorSimpleExcel<T> {
     // For UTF-8 Encoding
     private static final byte[] BOM = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
 
-    Object createExportFromList(List<List<String>> requestList, ExportType exportType, String name, List<ColumnModelDetails> columnModelDetailsList) {
+    Object createExportFromList(List<List<String>> requestList, ExportType exportType, String name, ColumnModel columnModel) {
         if (exportType.equals(ExportType.NONE)) {
             // return List
             return requestList;
         } else if (exportType.equals(ExportType.EXCEL)) {
             // return InputStream
-            return createExcel(requestList, name, columnModelDetailsList);
+            return createExcel(requestList, name, columnModel);
         } else if (exportType.equals(ExportType.CSV)) {
             // return InputStream
             return createCSV(requestList);
@@ -37,7 +37,7 @@ class CreatorSimpleExcel<T> {
         return null;
     }
 
-    private InputStream createExcel(List<List<String>> requestList, String sheetName, List<ColumnModelDetails> columnModelDetailsList) {
+    private InputStream createExcel(List<List<String>> requestList, String sheetName, ColumnModel columnModel) {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
 
             //Create a blank sheet
@@ -79,7 +79,8 @@ class CreatorSimpleExcel<T> {
             for (int i = 0; i < rowIndex.get(); i++)
                 sheet.autoSizeColumn(i);
 
-            mergeColumn(sheet, columnModelDetailsList);
+            mergeColumn(sheet, columnModel);
+            setFilter(sheet, columnModel);
 
             workbook.write(bos);
             return new ByteArrayInputStream(bos.toByteArray());
@@ -113,12 +114,12 @@ class CreatorSimpleExcel<T> {
     }
 
     // For POI (Excel)
-    private void mergeColumn(XSSFSheet sheet, List<ColumnModelDetails> columnModelDetailsList) {
-        if (columnModelDetailsList != null && !columnModelDetailsList.isEmpty()) {
+    private void mergeColumn(XSSFSheet sheet, ColumnModel columnModel) {
+        if (columnModel != null && columnModel.getColumnModelDetailsList() != null && !columnModel.getColumnModelDetailsList().isEmpty()) {
 
             // Index, From, To
             List<ImmutableTriple<Integer, Integer, Integer>> immutableTripleList = new ArrayList<>();
-            columnModelDetailsList.forEach(value -> {
+            columnModel.getColumnModelDetailsList().forEach(value -> {
                 if (value.isMerge())
                     immutableTripleList.add(new ImmutableTriple<>(value.getIndex(), 0, 0));
             });
@@ -141,7 +142,6 @@ class CreatorSimpleExcel<T> {
 
                         // Find Last Index That Such As Strings
                         // Then Must
-                        System.out.println(imm);
                         i--;
                         continue;
                     }
@@ -150,6 +150,14 @@ class CreatorSimpleExcel<T> {
                         imm.setMiddle(i);
                 }
             });
+        }
+    }
+
+    private void setFilter(XSSFSheet sheet, ColumnModel columnModel) {
+        if (columnModel != null && columnModel.isFilter()) {
+
+            int lastCellNum = sheet.getRow(0).getLastCellNum();
+            sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, lastCellNum - 1));
         }
     }
 }

@@ -2,6 +2,7 @@ package com.emreh.creator;
 
 import com.emreh.enums.ExportType;
 import com.emreh.exception.CreateReportException;
+import com.emreh.model.ColumnModel;
 import com.emreh.model.ColumnModelDetails;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -19,7 +20,7 @@ import java.util.stream.Stream;
 public class CreateSimpleReport<T> {
 
     private List<T> dataList;
-    private List<ColumnModelDetails> columnModelDetailsList = new ArrayList<>();
+    private ColumnModel columnModel;
     @Getter(AccessLevel.NONE)
     private final List<String> header = new ArrayList<>();
 
@@ -33,16 +34,16 @@ public class CreateSimpleReport<T> {
         return this;
     }
 
-    public CreateSimpleReport<T> setDetails(List<ColumnModelDetails> columnModelDetailsList) {
-        this.columnModelDetailsList = columnModelDetailsList;
+    public CreateSimpleReport<T> setDetails(ColumnModel columnModel) {
+        this.columnModel = columnModel;
         return this;
     }
 
     public CreateSimpleReport<T> builder() {
         Field[] allFields = this.dataList.get(0).getClass().getDeclaredFields();
 
-        createHeader(allFields, this.columnModelDetailsList);
-        createColumn(allFields, this.dataList, this.columnModelDetailsList);
+        createHeader(allFields, this.columnModel);
+        createColumn(allFields, this.dataList, this.columnModel);
 
         columnsExport.add(this.header);
         columnsExport.addAll(this.columns);
@@ -55,7 +56,7 @@ public class CreateSimpleReport<T> {
 
         CreatorSimpleExcel creatorSimpleExcel = new CreatorSimpleExcel();
 
-        return creatorSimpleExcel.createExportFromList(this.columnsExport, exportType, name != null ? name : "Created By Report Recipient", columnModelDetailsList);
+        return creatorSimpleExcel.createExportFromList(this.columnsExport, exportType, name != null ? name : "Created By Report Recipient", columnModel);
     }
 
     /**
@@ -63,15 +64,16 @@ public class CreateSimpleReport<T> {
      *
      * @param allFields
      * @param data
-     * @param model
+     * @param columnModel
      */
-    private void createColumn(Field[] allFields, List<T> data, List<ColumnModelDetails> model) {
+    private void createColumn(Field[] allFields, List<T> data, ColumnModel columnModel) {
         data.forEach(d -> {
             Class<?> clazz = d.getClass();
             List<String> col = new ArrayList<>();
             AtomicReference<List<List<String>>> resp = new AtomicReference<>();
             AtomicInteger columnCounter = new AtomicInteger(1);
 
+            List<ColumnModelDetails> model = columnModel.getColumnModelDetailsList();
             for (Field field : allFields) {
                 field.setAccessible(true);
                 model.forEach(m -> {
@@ -199,18 +201,20 @@ public class CreateSimpleReport<T> {
      * Create Header
      *
      * @param allFields
-     * @param model
+     * @param columnModel
      */
-    private void createHeader(Field[] allFields, List<ColumnModelDetails> model) {
+    private void createHeader(Field[] allFields, ColumnModel columnModel) {
         AtomicInteger headerCounter = new AtomicInteger(0);
 
-        for (int i = 0; i < model.size(); i++) {
+        Integer size = columnModel.getColumnModelDetailsList().size();
+        List<ColumnModelDetails> model = columnModel.getColumnModelDetailsList();
+        for (int i = 0; i < size; i++) {
             for (Field field : allFields) {
                 // Field Only
                 if (!model.get(i).getFieldName().contains(".") &&
                         field.getName().equals(model.get(i).getFieldName()) && i == headerCounter.get()) {
                     header.add(model.get(i).getTitle());
-                    indexing(columnModelDetailsList.get(i).getFieldName(), headerCounter);
+                    indexing(model.get(i).getFieldName(), headerCounter);
                     headerCounter.getAndIncrement();
                 }
                 // Child Of Collection
@@ -250,7 +254,7 @@ public class CreateSimpleReport<T> {
      * @param headerCounter
      */
     private void indexing(String filedName, AtomicInteger headerCounter) {
-        columnModelDetailsList.forEach(merge -> {
+        columnModel.getColumnModelDetailsList().forEach(merge -> {
             if (merge.getFieldName().equals(filedName)) {
                 merge.setIndex(headerCounter.get());
             }

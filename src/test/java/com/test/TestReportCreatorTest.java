@@ -2,6 +2,7 @@ package com.test;
 
 import com.emreh.creator.CreateSimpleReport;
 import com.emreh.enums.ExportType;
+import com.emreh.model.ColumnModel;
 import com.emreh.model.ColumnModelDetails;
 import com.test.model.ChildModel;
 import com.test.model.ParentModel;
@@ -21,7 +22,7 @@ public class TestReportCreatorTest {
 
     @Test
     public void test() throws IOException {
-        CreateSimpleReport createSimpleReport = new CreateSimpleReport().setDetails(modelDetailLists).setModel(init()).builder();
+        CreateSimpleReport createSimpleReport = new CreateSimpleReport().setDetails(columnsModel).setModel(init()).builder();
 
         { // Excel
             File currDir = new File(".");
@@ -61,20 +62,22 @@ public class TestReportCreatorTest {
         }
     }
 
-    static final List<ColumnModelDetails> modelDetailLists = new ArrayList<ColumnModelDetails>() {
-        private static final long serialVersionUID = 2278804983970104997L;
+    static final ColumnModel columnsModel = new ColumnModel(
+            new ArrayList<ColumnModelDetails>() {
+                private static final long serialVersionUID = 2278804983970104997L;
 
-        {
-            add(new ColumnModelDetails("Parent Name", "nameParent", true, true, -1));
-            add(new ColumnModelDetails("Parent last Name", "lastNameParent", true));
-            add(new ColumnModelDetails("child Model", "childModelList", false));
-            add(new ColumnModelDetails("Child Name", "childModelList.childName", true, true, -1));
-            add(new ColumnModelDetails("child Last Name", "childModelList.childLastName", true));
-            add(new ColumnModelDetails("childModel_ Sub Child Model", "childModelList.subChildModelList", true));
-            add(new ColumnModelDetails("childModel_ Sub Child Model _ sub Child Name", "childModelList.subChildModelList.subChildName", true, false, -1));
-            add(new ColumnModelDetails("childModel_ Sub Child Model _ sub Child Last Name", "childModelList.subChildModelList.subChildLastName", true));
-        }
-    };
+                {
+                    add(new ColumnModelDetails("Parent Name", "nameParent", true, true, -1));
+                    add(new ColumnModelDetails("Parent last Name", "lastNameParent", true));
+                    add(new ColumnModelDetails("child Model", "childModelList", false));
+                    add(new ColumnModelDetails("Child Name", "childModelList.childName", true, true, -1));
+                    add(new ColumnModelDetails("child Last Name", "childModelList.childLastName", true));
+                    add(new ColumnModelDetails("childModel_ Sub Child Model", "childModelList.subChildModelList", true));
+                    add(new ColumnModelDetails("childModel_ Sub Child Model _ sub Child Name", "childModelList.subChildModelList.subChildName", true, false, -1));
+                    add(new ColumnModelDetails("childModel_ Sub Child Model _ sub Child Last Name", "childModelList.subChildModelList.subChildLastName", true));
+                }
+            },
+            true);
 
     private static List<ParentModel> init() {
         List<ParentModel> parentModelList = new ArrayList<>();
