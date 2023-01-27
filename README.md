@@ -10,6 +10,7 @@ Features include the following:\
 `2- Placing the determined variables in the details model`\
 `3- Calling data from sub-models`\
 `4- Merging the specified columns with empty values in the Excel output`
+`5- Add Filter To All Columns In Excel Export`
 
 #Persian
 
@@ -23,3 +24,4 @@ Features include the following:\
 `۲- قراردادن متغییرهای تعیین شده در مدل جزییات`\
 `۳- فراخوانی داده ها از زیر مدلها`\
 `۴- ادغام ستونهای تعیین شده با مقادیر خالی در خروجی اکسل`\
+`۵- اضافه کردن قابلیت فیلتر روی همه ستونها در خروجی اکسل`
