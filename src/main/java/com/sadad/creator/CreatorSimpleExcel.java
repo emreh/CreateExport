@@ -1,8 +1,9 @@
 package com.sadad.creator;
 
 import com.sadad.enums.ExportType;
-import org.apache.commons.lang3.StringUtils;
+import com.sadad.model.ColumnModelDetails;
 import com.sadad.model.ImmutableTriple;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -13,21 +14,21 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-class CreatorSimpleExcel {
+class CreatorSimpleExcel<T> {
 
+    // For UTF-8 Encoding
     private static final byte[] BOM = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
 
-    Object createExportFromList(List<List<String>> requestList, ExportType exportType, String name, Map<String, Integer> mergeIndex) {
+    Object createExportFromList(List<List<String>> requestList, ExportType exportType, String name, List<ColumnModelDetails> columnModelDetailsList) {
         if (exportType.equals(ExportType.NONE)) {
             // return List
             return requestList;
         } else if (exportType.equals(ExportType.EXCEL)) {
             // return InputStream
-            return createExcel(requestList, name, mergeIndex);
+            return createExcel(requestList, name, columnModelDetailsList);
         } else if (exportType.equals(ExportType.CSV)) {
             // return InputStream
             return createCSV(requestList);
@@ -36,7 +37,7 @@ class CreatorSimpleExcel {
         return null;
     }
 
-    private InputStream createExcel(List<List<String>> requestList, String sheetName, Map<String, Integer> mergeIndex) {
+    private InputStream createExcel(List<List<String>> requestList, String sheetName, List<ColumnModelDetails> columnModelDetailsList) {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
 
             //Create a blank sheet
@@ -78,7 +79,7 @@ class CreatorSimpleExcel {
             for (int i = 0; i < rowIndex.get(); i++)
                 sheet.autoSizeColumn(i);
 
-            mergeColumn(sheet, mergeIndex);
+            mergeColumn(sheet, columnModelDetailsList);
 
             workbook.write(bos);
             return new ByteArrayInputStream(bos.toByteArray());
@@ -111,14 +112,19 @@ class CreatorSimpleExcel {
         }
     }
 
-    private void mergeColumn(XSSFSheet sheet, Map<String, Integer> mergeIndex) {
-        if (mergeIndex != null && !mergeIndex.isEmpty()) {
+    // For POI (Excel)
+    private void mergeColumn(XSSFSheet sheet, List<ColumnModelDetails> columnModelDetailsList) {
+        if (columnModelDetailsList != null && !columnModelDetailsList.isEmpty()) {
 
             // Index, From, To
             List<ImmutableTriple<Integer, Integer, Integer>> immutableTripleList = new ArrayList<>();
-            mergeIndex.forEach((key, value) -> {
-                immutableTripleList.add(new ImmutableTriple<>(value, 0, 0));
+            columnModelDetailsList.forEach(value -> {
+                if (value.isMerge())
+                    immutableTripleList.add(new ImmutableTriple<>(value.getIndex(), 0, 0));
             });
+
+            // If Is Not Define Column For Merge Row
+            if (immutableTripleList.isEmpty()) return;
 
             int lengthRowSheet = sheet.getLastRowNum();
 
@@ -130,18 +136,17 @@ class CreatorSimpleExcel {
                     if (cell != null && imm.getMiddle() >= imm.getRight() && cell.getStringCellValue() != null && !cell.getStringCellValue().isEmpty()) {
                         imm.setRight(i);
 
-                        if(imm.getRight() - imm.getMiddle() >= 2) {
-                            CellRangeAddress cellAddresses = new CellRangeAddress(imm.getMiddle(), imm.getRight() - 1, imm.getLeft(), imm.getLeft());
-                            sheet.addMergedRegion(cellAddresses);
-                        }
+                        if (imm.getRight() - imm.getMiddle() >= 2 && imm.getMiddle() != 0)
+                            sheet.addMergedRegion(new CellRangeAddress(imm.getMiddle(), imm.getRight() - 1, imm.getLeft(), imm.getLeft()));
 
                         // Find Last Index That Such As Strings
                         // Then Must
+                        System.out.println(imm);
                         i--;
                         continue;
                     }
 
-                    if (cell != null && cell.getStringCellValue() != null && !cell.getStringCellValue().isEmpty())
+                    if (cell != null && cell.getStringCellValue() != null && !cell.getStringCellValue().isEmpty() && i != 0)
                         imm.setMiddle(i);
                 }
             });

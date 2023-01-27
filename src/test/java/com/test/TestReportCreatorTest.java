@@ -2,14 +2,17 @@ package com.test;
 
 import com.sadad.creator.CreateSimpleReport;
 import com.sadad.enums.ExportType;
-import com.sadad.model.ModelDetails;
+import com.sadad.model.ColumnModelDetails;
 import com.test.model.ChildModel;
 import com.test.model.ParentModel;
 import com.test.model.SubChildModel;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +21,8 @@ public class TestReportCreatorTest {
 
     @Test
     public void test() throws IOException {
-        CreateSimpleReport createSimpleReport = new CreateSimpleReport().setDetails(modelDetailLists).setModel(init()).setMerge(modelMerge).builder();
-        System.out.println(createSimpleReport.getModelMergeIndex());
+        CreateSimpleReport createSimpleReport = new CreateSimpleReport().setDetails(modelDetailLists).setModel(init()).builder();
+
         { // Excel
             File currDir = new File(".");
             String path = currDir.getAbsolutePath();
@@ -58,27 +61,20 @@ public class TestReportCreatorTest {
         }
     }
 
-    static final List<ModelDetails> modelDetailLists = new ArrayList<ModelDetails>() {
+    static final List<ColumnModelDetails> modelDetailLists = new ArrayList<ColumnModelDetails>() {
         private static final long serialVersionUID = 2278804983970104997L;
 
         {
-            add(new ModelDetails("Parent Name", "nameParent", true));
-            add(new ModelDetails("Parent last Name", "lastNameParent", true));
-            add(new ModelDetails("child Model", "childModelList", false));
-            add(new ModelDetails("Child Name", "childModelList.childName", true));
-            add(new ModelDetails("child Last Name", "childModelList.childLastName", true));
-            add(new ModelDetails("childModel_ Sub Child Model", "childModelList.subChildModelList", true));
-            add(new ModelDetails("childModel_ Sub Child Model _ sub Child Name", "childModelList.subChildModelList.subChildName", true));
-            add(new ModelDetails("childModel_ Sub Child Model _ sub Child Last Name", "childModelList.subChildModelList.subChildLastName", true));
+            add(new ColumnModelDetails("Parent Name", "nameParent", true, true, -1));
+            add(new ColumnModelDetails("Parent last Name", "lastNameParent", true));
+            add(new ColumnModelDetails("child Model", "childModelList", false));
+            add(new ColumnModelDetails("Child Name", "childModelList.childName", true, true, -1));
+            add(new ColumnModelDetails("child Last Name", "childModelList.childLastName", true));
+            add(new ColumnModelDetails("childModel_ Sub Child Model", "childModelList.subChildModelList", true));
+            add(new ColumnModelDetails("childModel_ Sub Child Model _ sub Child Name", "childModelList.subChildModelList.subChildName", true, false, -1));
+            add(new ColumnModelDetails("childModel_ Sub Child Model _ sub Child Last Name", "childModelList.subChildModelList.subChildLastName", true));
         }
     };
-
-    //Input Merge Model To Excel
-    static final List<String> modelMerge = new ArrayList<String>() {{
-        add("nameParent");
-        add("childModelList.childName");
-        add("childModelList.subChildModelList.subChildName");
-    }};
 
     private static List<ParentModel> init() {
         List<ParentModel> parentModelList = new ArrayList<>();

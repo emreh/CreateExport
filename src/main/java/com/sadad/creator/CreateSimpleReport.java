@@ -2,7 +2,7 @@ package com.sadad.creator;
 
 import com.sadad.enums.ExportType;
 import com.sadad.exception.CreateReportException;
-import com.sadad.model.ModelDetails;
+import com.sadad.model.ColumnModelDetails;
 import lombok.AccessLevel;
 import lombok.Getter;
 
@@ -19,10 +19,7 @@ import java.util.stream.Stream;
 public class CreateSimpleReport<T> {
 
     private List<T> dataList;
-    private List<ModelDetails> modelDetailsList = new ArrayList<>();
-    private List<String> modelMergeList = new ArrayList<>();
-    private Map<String, Integer> modelMergeIndex = new LinkedHashMap<>();
-
+    private List<ColumnModelDetails> columnModelDetailsList = new ArrayList<>();
     @Getter(AccessLevel.NONE)
     private final List<String> header = new ArrayList<>();
 
@@ -36,21 +33,16 @@ public class CreateSimpleReport<T> {
         return this;
     }
 
-    public CreateSimpleReport<T> setMerge(List<String> modelMergeList) {
-        this.modelMergeList = modelMergeList;
-        return this;
-    }
-
-    public CreateSimpleReport<T> setDetails(List<ModelDetails> modelDetailsList) {
-        this.modelDetailsList = modelDetailsList;
+    public CreateSimpleReport<T> setDetails(List<ColumnModelDetails> columnModelDetailsList) {
+        this.columnModelDetailsList = columnModelDetailsList;
         return this;
     }
 
     public CreateSimpleReport<T> builder() {
         Field[] allFields = this.dataList.get(0).getClass().getDeclaredFields();
 
-        createHeader(allFields, this.modelDetailsList);
-        createColumn(allFields, this.dataList, this.modelDetailsList);
+        createHeader(allFields, this.columnModelDetailsList);
+        createColumn(allFields, this.dataList, this.columnModelDetailsList);
 
         columnsExport.add(this.header);
         columnsExport.addAll(this.columns);
@@ -63,7 +55,7 @@ public class CreateSimpleReport<T> {
 
         CreatorSimpleExcel creatorSimpleExcel = new CreatorSimpleExcel();
 
-        return creatorSimpleExcel.createExportFromList(this.columnsExport, exportType, name != null ? name : "Created By Report Recipient", this.modelMergeIndex);
+        return creatorSimpleExcel.createExportFromList(this.columnsExport, exportType, name != null ? name : "Created By Report Recipient", columnModelDetailsList);
     }
 
     /**
@@ -73,7 +65,7 @@ public class CreateSimpleReport<T> {
      * @param data
      * @param model
      */
-    private void createColumn(Field[] allFields, List<T> data, List<ModelDetails> model) {
+    private void createColumn(Field[] allFields, List<T> data, List<ColumnModelDetails> model) {
         data.forEach(d -> {
             Class<?> clazz = d.getClass();
             List<String> col = new ArrayList<>();
@@ -138,7 +130,7 @@ public class CreateSimpleReport<T> {
      * @param model
      * @return
      */
-    private List<List<String>> createNestedColumn(String parentName, Field[] subAllFields, AtomicInteger columnCounter, Set<Object> subList, List<ModelDetails> model) {
+    private List<List<String>> createNestedColumn(String parentName, Field[] subAllFields, AtomicInteger columnCounter, Set<Object> subList, List<ColumnModelDetails> model) {
         List<List<String>> localColumns = new ArrayList<>();
         subList.forEach(sub -> {
             ((List<?>) sub).forEach(s -> {
@@ -209,7 +201,7 @@ public class CreateSimpleReport<T> {
      * @param allFields
      * @param model
      */
-    private void createHeader(Field[] allFields, List<ModelDetails> model) {
+    private void createHeader(Field[] allFields, List<ColumnModelDetails> model) {
         AtomicInteger headerCounter = new AtomicInteger(0);
 
         for (int i = 0; i < model.size(); i++) {
@@ -218,7 +210,7 @@ public class CreateSimpleReport<T> {
                 if (!model.get(i).getFieldName().contains(".") &&
                         field.getName().equals(model.get(i).getFieldName()) && i == headerCounter.get()) {
                     header.add(model.get(i).getTitle());
-                    indexOfMerge(modelDetailsList.get(i).getFieldName(), headerCounter);
+                    indexing(columnModelDetailsList.get(i).getFieldName(), headerCounter);
                     headerCounter.getAndIncrement();
                 }
                 // Child Of Collection
@@ -239,15 +231,15 @@ public class CreateSimpleReport<T> {
      * Child Of createHeader Function, Create Nested Header
      *
      * @param className
-     * @param modelDetailsList
+     * @param columnModelDetailsList
      * @param headerCounter
      */
-    private void createNestedHeader(String className, List<ModelDetails> modelDetailsList, AtomicInteger headerCounter) {
-        for (int i = 0; i < modelDetailsList.size(); i++)
-            if (modelDetailsList.get(i).getFieldName().startsWith(getClassNameFromPackage(className))
+    private void createNestedHeader(String className, List<ColumnModelDetails> columnModelDetailsList, AtomicInteger headerCounter) {
+        for (int i = 0; i < columnModelDetailsList.size(); i++)
+            if (columnModelDetailsList.get(i).getFieldName().startsWith(getClassNameFromPackage(className))
                     && i == headerCounter.get()) {
-                header.add(modelDetailsList.get(i).getTitle());
-                indexOfMerge(modelDetailsList.get(i).getFieldName(), headerCounter);
+                header.add(columnModelDetailsList.get(i).getTitle());
+                indexing(columnModelDetailsList.get(i).getFieldName(), headerCounter);
             }
     }
 
@@ -257,10 +249,10 @@ public class CreateSimpleReport<T> {
      * @param filedName
      * @param headerCounter
      */
-    private void indexOfMerge(String filedName, AtomicInteger headerCounter) {
-        modelMergeList.forEach(merge -> {
-            if (merge.equals(filedName)) {
-                modelMergeIndex.put(filedName, headerCounter.get());
+    private void indexing(String filedName, AtomicInteger headerCounter) {
+        columnModelDetailsList.forEach(merge -> {
+            if (merge.getFieldName().equals(filedName)) {
+                merge.setIndex(headerCounter.get());
             }
         });
     }
