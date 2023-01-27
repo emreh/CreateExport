@@ -1,4 +1,4 @@
-package com.sadad.exception;
+package com.emreh.exception;
 
 public class CreateReportException extends RuntimeException{
 

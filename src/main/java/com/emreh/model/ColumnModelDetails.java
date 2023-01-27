@@ -1,4 +1,4 @@
-package com.sadad.model;
+package com.emreh.model;
 
 import lombok.*;
 
